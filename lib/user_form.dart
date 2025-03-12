@@ -23,6 +23,10 @@ class UserForm extends StatefulWidget {
 // Classe que gerencia o estado do formulário do usuário.
 class _UserFormState extends State<UserForm> {
 
+  String? selectedPerfil;
+  String? selectedEmpresa;
+  String? selectedSistema;
+
   // Define o título inicial da página como "Create User".
   String title = "Criar usuário";
 
@@ -72,6 +76,10 @@ class _UserFormState extends State<UserForm> {
     void save() {
       // Valida o formulário antes de salvar.
       final isValidate = _key.currentState?.validate();
+
+      controllerPerfil.text = selectedPerfil ?? '';
+      controllerEmpresa.text = selectedEmpresa ?? '';
+      controllerSistema.text = selectedSistema ?? '';
 
       // Se a validação falhar, interrompe o processo de salvamento.
       if (isValidate == false) {
@@ -161,197 +169,199 @@ class _UserFormState extends State<UserForm> {
       ),
       body: Padding( // Usa um layout de container reutilizável.
         padding: EdgeInsets.only(top: 10),
-        child: ContainerAll(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Form(
-                key: _key, // Define a chave do formulário.
-                child: Column(
-                  children: [
-                    // Campo de entrada para a senha do usuário.
-                    FieldForm(
-                      label: 'Login', 
-                      //isPassword: false, 
-                      controller: controllerLogin,
-                      isEmail: false,
-                    ),
-                    // Campo de entrada para o nome do usuário.
-                    FieldForm(
-                      label: 'Nome', 
-                      //isPassword: false, 
-                      controller: controllerName,
-                      isEmail: false,
-                    ),
-                    // Campo de entrada para o e-mail do usuário.
-                    FieldForm(
-                      label: 'Email', 
-                      //isPassword: false, 
-                      controller: controllerEmail,
-                      isEmail: true,
-                    ),
-
-                    SizedBox(height: 10),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField(
-                            value: controllerPerfil.text.isEmpty ? null: controllerPerfil.text,
-                            decoration: InputDecoration(
-                              labelText: 'Perfil',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'Admin',
-                                child: Text('Admin'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'Usuário',
-                                child: Text('Usuário'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'Gerente',
-                                child: Text('Gerente'),
-                              ),
-                            ],
-                            onChanged: (String? newValue){
-                              setState(() {
-                                controllerPerfil.text = newValue ?? '';
-                              });
-                            },
-                            isExpanded: true,
-                          ),
-                        ),
-                        SizedBox(width: 10), // Espaço entre os campos
-                        Expanded(
-                          child: DropdownButtonFormField(
-                            value: controllerEmpresa.text.isEmpty ? null: controllerEmpresa.text,
-                            decoration: InputDecoration(
-                              labelText: 'Empresa',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'Skymed',
-                                child: Text('Skymed'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'Nelógica',
-                                child: Text('Nelógica'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'Gerdau',
-                                child: Text('Gerdau'),
-                              ),
-                            ],
-                            onChanged: (String? newValue){
-                              setState(() {
-                                controllerEmpresa.text = newValue ?? '';
-                              });
-                            },
-                            isExpanded: true,
-                          ),
-                        ),                      
-                      ],
-                    ),// <-- Fechando corretamente o Row
-                    
-                    SizedBox(height: 10),
-                     
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField(
-                            value: controllerSistema.text.isEmpty ? null: controllerSistema.text,                           
-                            decoration: InputDecoration(
-                              labelText: 'Sistema',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: 'Visual Studio Code',
-                                child: Text('Visual Studio Code'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'Anesthesia SX',
-                                child: Text('Anesthesia SX'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: 'SAP',
-                                child: Text('SAP'),
-                              ),
-                            ],
-                            onChanged: (String? newValue){
-                              setState(() {
-                                controllerSistema.text = newValue ?? '';
-                              });
-                            },
-                            isExpanded: true,
-                          )
-                        ),
-                        SizedBox(width: 10), // Espaço entre os campos
-                        Expanded(
-                          child: FieldForm(
-                            label: 'Expiração da Senha', 
-                            controller: controllerExpira,
-                            isEmail: false,
-                            inputType: TextInputType.datetime, // Tipo de teclado para data
-                            placeholder: 'dd/mm/yyyy', // Placeholder que mostra o formato de data
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Aqui está o checkbox
-                    SizedBox(height: 10),
-                    CheckboxListTile(
-                      title: Text('Sistêmico'),
-                      value: _isChecked,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isChecked = value ?? false;
-                        });
-                      },
-                    ), 
-
-                    Container(
-                      padding: EdgeInsets.all(10),
-                      margin: EdgeInsets.symmetric(vertical: 10),
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200], // Cor de fundo do container
-                        borderRadius: BorderRadius.circular(10), // Bordas arredondadas
+        child: SingleChildScrollView(
+          child: ContainerAll(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Form(
+                  key: _key, // Define a chave do formulário.
+                  child: Column(
+                    children: [
+                      // Campo de entrada para a senha do usuário.
+                      FieldForm(
+                        label: 'Login', 
+                        //isPassword: false, 
+                        controller: controllerLogin,
+                        isEmail: false,
                       ),
-                      child: Text(
-                        'O usuário será cadastrado desativado e com a senha expirada.\n'           
-                        '         Portanto o próprio ativar a conta e mudar a senha.'
+                      // Campo de entrada para o nome do usuário.
+                      FieldForm(
+                        label: 'Nome', 
+                        //isPassword: false, 
+                        controller: controllerName,
+                        isEmail: false,
                       ),
-                    ),
+                      // Campo de entrada para o e-mail do usuário.
+                      FieldForm(
+                        label: 'Email', 
+                        //isPassword: false, 
+                        controller: controllerEmail,
+                        isEmail: true,
+                      ),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: TextButton(
-                          onPressed: save,
-                          child: Text('Cadastrar'),
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 27, 27, 27)),
-                            foregroundColor: WidgetStateProperty.all(Colors.white),
+                      SizedBox(height: 10),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: selectedPerfil, // Usa a variável de estado
+                              decoration: InputDecoration(
+                                labelText: 'Perfil',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items: [
+                                DropdownMenuItem<String>(
+                                  value: 'Admin',
+                                  child: Text('Admin'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'Usuário',
+                                  child: Text('Usuário'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'Gerente',
+                                  child: Text('Gerente'),
+                                ),
+                              ],
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  selectedPerfil = newValue;
+                                });
+                              },
+                              isExpanded: true,
+                            ),
                           ),
+                          SizedBox(width: 10), // Espaço entre os campos
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: selectedEmpresa, // Usa a variável de estado
+                              decoration: InputDecoration(
+                                labelText: 'Empresa',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items: [
+                                DropdownMenuItem<String>(
+                                  value: 'Skymed',
+                                  child: Text('Skymed'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'Nelógica',
+                                  child: Text('Nelógica'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'Gerdau',
+                                  child: Text('Gerdau'),
+                                ),
+                              ],
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  selectedEmpresa = newValue;
+                                });
+                              },
+                              isExpanded: true,
+                            ),
+                          ),                      
+                        ],
+                      ),// <-- Fechando corretamente o Row
+                      
+                      SizedBox(height: 10),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: selectedSistema, // Usa a variável de estado
+                              decoration: InputDecoration(
+                                labelText: 'Sistema',
+                                border: OutlineInputBorder(),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items: [
+                                DropdownMenuItem<String>(
+                                  value: 'Visual Studio Code',
+                                  child: Text('Visual Studio Code'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'Anesthesia SX',
+                                  child: Text('Anesthesia SX'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: 'SAP',
+                                  child: Text('SAP'),
+                                ),
+                              ],
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  selectedSistema = newValue;
+                                });
+                              },
+                              isExpanded: true,
+                            ),
+                          ),
+                          SizedBox(width: 10), // Espaço entre os campos
+                          Expanded(
+                            child: FieldForm(
+                              label: 'Expiração da Senha', 
+                              controller: controllerExpira,
+                              isEmail: false,
+                              inputType: TextInputType.datetime, // Tipo de teclado para data
+                              placeholder: 'dd/mm/yyyy', // Placeholder que mostra o formato de data
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Aqui está o checkbox
+                      SizedBox(height: 10),
+                      CheckboxListTile(
+                        title: Text('Sistêmico'),
+                        value: _isChecked,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _isChecked = value ?? false;
+                          });
+                        },
+                      ), 
+
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        margin: EdgeInsets.symmetric(vertical: 10),
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200], // Cor de fundo do container
+                          borderRadius: BorderRadius.circular(10), // Bordas arredondadas
+                        ),
+                        child: Text(
+                          'O usuário será cadastrado desativado e com a senha expirada.\n'           
+                          '         Portanto o próprio ativar a conta e mudar a senha.'
                         ),
                       ),
-                    ),
-                  ], // Fechando corretamente a lista de children
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 20),
+                          child: TextButton(
+                            onPressed: save,
+                            child: Text('Cadastrar'),
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 27, 27, 27)),
+                              foregroundColor: WidgetStateProperty.all(Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ], // Fechando corretamente a lista de children
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

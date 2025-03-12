@@ -46,17 +46,21 @@ class FieldForm extends StatelessWidget {
       validator: (value) {
         // Verifica se o campo é "Expiração de senha" e aplica a validação de data.
         if (label == 'Expiração de senha') {
+
+          if (label == 'Expiração da Senha') {
+            if (value == null || value.isEmpty) {
+              return 'Campo obrigatório';
+            }
+          }
+
           try {
-            // Tentamos analisar a data
             final date = DateFormat('dd/MM/yyyy').parseStrict(value!);
             final today = DateTime.now();
 
-            // Verifica se a data é inválida, como "0/0/0"
             if (date.year < 1 || date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) {
               return 'Digite uma data válida (dd/MM/yyyy)';
             }
 
-            // Verificação adicional para dias específicos em meses e ano bissexto
             final daysInMonth = DateTime(date.year, date.month + 1, 0).day;
             if (date.day > daysInMonth) {
               return 'O dia ${date.day} não existe no mês ${date.month}';
@@ -73,11 +77,11 @@ class FieldForm extends StatelessWidget {
         }
 
         // Validação para outros campos (não aplica ao campo de data)
-        if (value!.length < 5 && label != 'Expiração de senha') {
+        if (!this.isEmail && value!.length < 5 && label != 'Expiração da Senha') {
           return 'Digite pelo menos 5 caracteres';
         }
 
-        if (this.isEmail && !value.contains("@")) { // Validação extra para campos de e-mail
+        if (this.isEmail && (value == null || !value.contains("@"))) { // Validação extra para campos de e-mail
           return 'Digite o email corretamente';
         }
 
