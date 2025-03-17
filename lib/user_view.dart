@@ -26,7 +26,7 @@ class UserView extends StatelessWidget {
   TextEditingController controllerEmpresa = TextEditingController();
   TextEditingController controllerSistema = TextEditingController();
   TextEditingController controllerExpira = TextEditingController();
-  
+
   //get controllerLogin => null;
 
   @override
@@ -61,6 +61,12 @@ class UserView extends StatelessWidget {
             title: Text(this.title),
             backgroundColor: const Color.fromARGB(255, 27, 27, 27),
             foregroundColor: Colors.white,
+            leading: BackButton(
+              onPressed: () {
+                userProvider.indexUser = null;
+                Navigator.popAndPushNamed(context, "/list");
+              },
+            ),
           ),
         ),
       ),

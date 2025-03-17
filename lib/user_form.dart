@@ -1,36 +1,25 @@
-// Importa o arquivo 'container_all.dart', que provavelmente contém um layout de container reutilizável.
 import 'package:crud_teste1/container_all.dart';
-// Importa o arquivo 'field_form.dart', que deve conter a estrutura para os campos do formulário.
 import 'package:crud_teste1/field_form.dart';
-// Importa o pacote Flutter Material, que fornece widgets essenciais para o design da aplicação.
 import 'package:flutter/material.dart';
-
-// Importa o arquivo 'user.dart', que deve definir a classe User.
 import 'user.dart';
-// Importa o arquivo 'user_provider.dart', que gerencia o estado dos usuários.
 import 'user_provider.dart';
-
 import 'package:intl/intl.dart';
+import 'api_service.dart';
 
-// Define a classe UserForm como um StatefulWidget, permitindo mudanças de estado dinâmicas.
 class UserForm extends StatefulWidget {
-  const UserForm({super.key}); // Construtor da classe.
+  const UserForm({super.key});
 
   @override
-  State<UserForm> createState() => _UserFormState(); // Cria o estado para o formulário do usuário.
+  State<UserForm> createState() => _UserFormState();
 }
 
-// Classe que gerencia o estado do formulário do usuário.
 class _UserFormState extends State<UserForm> {
-
   String? selectedPerfil;
   String? selectedEmpresa;
   String? selectedSistema;
 
-  // Define o título inicial da página como "Create User".
   String title = "Criar usuário";
 
-  // Controladores para os campos de entrada do formulário.
   TextEditingController controllerName = TextEditingController();
   TextEditingController controllerEmail = TextEditingController();
   TextEditingController controllerLogin = TextEditingController();
@@ -39,22 +28,95 @@ class _UserFormState extends State<UserForm> {
   TextEditingController controllerSistema = TextEditingController();
   TextEditingController controllerExpira = TextEditingController();
 
-  // Controle do estado do checkbox
   bool _isChecked = false;
+
+  GlobalKey<FormState> _key = GlobalKey();
+
+  Future<void> save() async {
+    final isValidate = _key.currentState?.validate();
+
+    controllerPerfil.text = selectedPerfil ?? '';
+    controllerEmpresa.text = selectedEmpresa ?? '';
+    controllerSistema.text = selectedSistema ?? '';
+
+    if (isValidate == false) {
+      return;
+    }
+
+    try {
+      final date = DateFormat('dd/MM/yyyy').parseStrict(controllerExpira.text);
+      final today = DateTime.now();
+
+      if (date.isBefore(DateTime(today.year, today.month, today.day))) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('A data de expiração não pode ser no passado')),
+        );
+        return;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Digite uma data válida no formato dd/MM/yyyy')),
+      );
+      return;
+    }
+
+    _key.currentState?.save();
+
+    User user = User(
+      name: controllerName.text,
+      email: controllerEmail.text,
+      login: controllerLogin.text,
+      perfil: controllerPerfil.text,
+      empresa: controllerEmpresa.text,
+      sistema: controllerSistema.text,
+      expira: controllerExpira.text,
+      isChecked: _isChecked,
+    );
+
+    UserProvider userProvider = UserProvider.of(context) as UserProvider;
+
+    // **Chamada da API para adicionar o usuário**
+    
+
+    if (userProvider.indexUser != null) {
+      // Se for uma edição, enviamos a atualização para a API
+      final result = await ApiService.addUser(user);  // Isso poderia ser uma atualização no caso de edição
+
+      if (result != null) {
+        userProvider.users[userProvider.indexUser!] = user;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Usuário atualizado com sucesso!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao atualizar usuário.')),
+        );
+      }
+    } else {
+        // Se for um novo cadastro
+        final result = await ApiService.addUser(user);
+        if (result != null) {
+          userProvider.users.add(user);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Usuário cadastrado com sucesso!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao cadastrar usuário.')),
+          );
+        }
+      }
+      Navigator.popAndPushNamed(context, "/list");
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    // Obtém a instância do UserProvider para gerenciar os dados do usuário.
     UserProvider userProvider = UserProvider.of(context) as UserProvider;
+    int? index;
 
-    int? index; // Índice do usuário selecionado, se houver.
-
-    // Verifica se há um usuário selecionado para edição.
     if (userProvider.indexUser != null) {
       index = userProvider.indexUser;
 
-      // Preenche os campos com os dados do usuário existente.
       controllerName.text = userProvider.userSelected!.name;
       controllerEmail.text = userProvider.userSelected!.email;
       controllerLogin.text = userProvider.userSelected!.login;
@@ -63,111 +125,36 @@ class _UserFormState extends State<UserForm> {
       controllerSistema.text = userProvider.userSelected!.sistema;
       controllerExpira.text = userProvider.userSelected!.expira;
 
-      // Atualiza o título da página para "Edit User".
       setState(() {
         this.title = "Editar usuário";
       });
     }
 
-    // Cria uma chave global para o formulário.
-    GlobalKey<FormState> _key = GlobalKey();
-    
-    // Função para salvar os dados do formulário.
-    void save() {
-      // Valida o formulário antes de salvar.
-      final isValidate = _key.currentState?.validate();
-
-      controllerPerfil.text = selectedPerfil ?? '';
-      controllerEmpresa.text = selectedEmpresa ?? '';
-      controllerSistema.text = selectedSistema ?? '';
-
-      // Se a validação falhar, interrompe o processo de salvamento.
-      if (isValidate == false) {
-        return;
-      }
-      
-      // Validação para impedir datas no passado
-      try {
-        final date = DateFormat('dd/MM/yyyy').parseStrict(controllerExpira.text);
-        final today = DateTime.now();
-
-        if (date.isBefore(DateTime(today.year, today.month, today.day))) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('A data de expiração não pode ser no passado')),
-          );
-          return;
-        }
-      } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Digite uma data válida no formato dd/MM/yyyy')),
-          );
-          return;
-        }
-
-      // Salva os dados do formulário.
-      _key.currentState?.save();
-
-      // Cria um novo usuário com os dados inseridos no formulário.
-      User user = User(
-        name: controllerName.text, 
-        email: controllerEmail.text, 
-        login: controllerLogin.text,
-        perfil: controllerPerfil.text,
-        empresa: controllerEmpresa.text,
-        sistema: controllerSistema.text,
-        expira: controllerExpira.text,
-        isChecked: _isChecked,
-      );
-
-      if (index != null) {
-        // Se estiver editando, substitui o usuário na lista.
-        userProvider.users[index] = user;
-      } else {
-        // Obtém o tamanho atual da lista de usuários.
-        int usersLength = userProvider.users.length;
-
-        // Adiciona um novo usuário à lista.
-        userProvider.users.insert(usersLength, user);
-      }
-
-      // Navega para a lista de usuários após salvar.
-      Navigator.popAndPushNamed(context, "/list");
-    }
-
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20.0), // Ajuste o valor conforme necessário
-            bottomRight: Radius.circular(20.0),
-          ),
-          child: AppBar(
-            title: Text(this.title),
-            backgroundColor: const Color.fromARGB(255, 27, 27, 27),
-            foregroundColor: Colors.white,
-            actions: [
-              Container(
-                child: TextButton(
-                  style: ButtonStyle(
-                    foregroundColor: WidgetStateProperty.all(Colors.black),
-                  ),
-                  child: Text('Lista de usuários'),
-                  onPressed: () {
-                    Navigator.popAndPushNamed(context, "/list");
-                  },
-                ),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 255, 255, 255),
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                margin: EdgeInsets.all(8),
+      appBar: AppBar(
+        title: Text(this.title),
+        backgroundColor: const Color.fromARGB(255, 27, 27, 27),
+        foregroundColor: Colors.white,
+        actions: [
+          Container(
+            child: TextButton(
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.black),
               ),
-            ],
+              child: Text('Lista de usuários'),
+              onPressed: () {
+                Navigator.popAndPushNamed(context, "/list");
+              },
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            margin: EdgeInsets.all(8),
           ),
-        ),
+        ],
       ),
-      body: Padding( // Usa um layout de container reutilizável.
+      body: Padding(
         padding: EdgeInsets.only(top: 10),
         child: SingleChildScrollView(
           child: ContainerAll(
@@ -175,58 +162,22 @@ class _UserFormState extends State<UserForm> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Form(
-                  key: _key, // Define a chave do formulário.
+                  key: _key,
                   child: Column(
                     children: [
-                      // Campo de entrada para a senha do usuário.
-                      FieldForm(
-                        label: 'Login', 
-                        //isPassword: false, 
-                        controller: controllerLogin,
-                        isEmail: false,
-                      ),
-                      // Campo de entrada para o nome do usuário.
-                      FieldForm(
-                        label: 'Nome', 
-                        //isPassword: false, 
-                        controller: controllerName,
-                        isEmail: false,
-                      ),
-                      // Campo de entrada para o e-mail do usuário.
-                      FieldForm(
-                        label: 'Email', 
-                        //isPassword: false, 
-                        controller: controllerEmail,
-                        isEmail: true,
-                      ),
-
+                      FieldForm(label: 'Login', controller: controllerLogin, isEmail: false),
+                      FieldForm(label: 'Nome', controller: controllerName, isEmail: false),
+                      FieldForm(label: 'Email', controller: controllerEmail, isEmail: true),
                       SizedBox(height: 10),
-
                       Row(
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: selectedPerfil, // Usa a variável de estado
-                              decoration: InputDecoration(
-                                labelText: 'Perfil',
-                                border: OutlineInputBorder(),
-                                filled: true,
-                                fillColor: Colors.white,
-                              ),
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: 'Admin',
-                                  child: Text('Admin'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'Usuário',
-                                  child: Text('Usuário'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'Gerente',
-                                  child: Text('Gerente'),
-                                ),
-                              ],
+                              value: selectedPerfil,
+                              decoration: InputDecoration(labelText: 'Perfil', border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
+                              items: ['Admin', 'Usuário', 'Gerente']
+                                  .map((perfil) => DropdownMenuItem<String>(value: perfil, child: Text(perfil)))
+                                  .toList(),
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedPerfil = newValue;
@@ -235,30 +186,14 @@ class _UserFormState extends State<UserForm> {
                               isExpanded: true,
                             ),
                           ),
-                          SizedBox(width: 10), // Espaço entre os campos
+                          SizedBox(width: 10),
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: selectedEmpresa, // Usa a variável de estado
-                              decoration: InputDecoration(
-                                labelText: 'Empresa',
-                                border: OutlineInputBorder(),
-                                filled: true,
-                                fillColor: Colors.white,
-                              ),
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: 'Skymed',
-                                  child: Text('Skymed'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'Nelógica',
-                                  child: Text('Nelógica'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'Gerdau',
-                                  child: Text('Gerdau'),
-                                ),
-                              ],
+                              value: selectedEmpresa,
+                              decoration: InputDecoration(labelText: 'Empresa', border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
+                              items: ['Skymed', 'Nelógica', 'Gerdau']
+                                  .map((empresa) => DropdownMenuItem<String>(value: empresa, child: Text(empresa)))
+                                  .toList(),
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedEmpresa = newValue;
@@ -266,37 +201,19 @@ class _UserFormState extends State<UserForm> {
                               },
                               isExpanded: true,
                             ),
-                          ),                      
+                          ),
                         ],
-                      ),// <-- Fechando corretamente o Row
-                      
+                      ),
                       SizedBox(height: 10),
-                      
                       Row(
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: selectedSistema, // Usa a variável de estado
-                              decoration: InputDecoration(
-                                labelText: 'Sistema',
-                                border: OutlineInputBorder(),
-                                filled: true,
-                                fillColor: Colors.white,
-                              ),
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: 'Visual Studio Code',
-                                  child: Text('Visual Studio Code'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'Anesthesia SX',
-                                  child: Text('Anesthesia SX'),
-                                ),
-                                DropdownMenuItem<String>(
-                                  value: 'SAP',
-                                  child: Text('SAP'),
-                                ),
-                              ],
+                              value: selectedSistema,
+                              decoration: InputDecoration(labelText: 'Sistema', border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
+                              items: ['Visual Studio Code', 'Anesthesia SX', 'SAP']
+                                  .map((sistema) => DropdownMenuItem<String>(value: sistema, child: Text(sistema)))
+                                  .toList(),
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedSistema = newValue;
@@ -305,19 +222,12 @@ class _UserFormState extends State<UserForm> {
                               isExpanded: true,
                             ),
                           ),
-                          SizedBox(width: 10), // Espaço entre os campos
+                          SizedBox(width: 10),
                           Expanded(
-                            child: FieldForm(
-                              label: 'Expiração da Senha', 
-                              controller: controllerExpira,
-                              isEmail: false,
-                              inputType: TextInputType.datetime, // Tipo de teclado para data
-                              placeholder: 'dd/mm/yyyy', // Placeholder que mostra o formato de data
-                            ),
+                            child: FieldForm(label: 'Expiração da Senha', controller: controllerExpira, isEmail: false, inputType: TextInputType.datetime, placeholder: 'dd/mm/yyyy'),
                           ),
                         ],
                       ),
-                      // Aqui está o checkbox
                       SizedBox(height: 10),
                       CheckboxListTile(
                         title: Text('Sistêmico'),
@@ -327,22 +237,7 @@ class _UserFormState extends State<UserForm> {
                             _isChecked = value ?? false;
                           });
                         },
-                      ), 
-
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        margin: EdgeInsets.symmetric(vertical: 10),
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200], // Cor de fundo do container
-                          borderRadius: BorderRadius.circular(10), // Bordas arredondadas
-                        ),
-                        child: Text(
-                          'O usuário será cadastrado desativado e com a senha expirada.\n'           
-                          '         Portanto o próprio ativar a conta e mudar a senha.'
-                        ),
                       ),
-
                       SizedBox(
                         width: double.infinity,
                         child: Padding(
@@ -357,7 +252,7 @@ class _UserFormState extends State<UserForm> {
                           ),
                         ),
                       ),
-                    ], // Fechando corretamente a lista de children
+                    ],
                   ),
                 ),
               ],
